@@ -10,10 +10,10 @@ DEPENDPATH        = $$p
 INCLUDEPATH       = $$p
 macx:INCLUDEPATH += /usr/X11R6/include
 macx:QMAKE_LIBDIR+= /usr/X11R6/lib
-QMAKE_LIBDIR     += ../../Build ../../IO/expressions
+QMAKE_LIBDIR     += ../../build ../../IO/expressions ../../build/install/lib
 QT               += opengl
-LIBS             += -lTuvok -ltuvokexpr -lz
-unix:LIBS        += -lGL -lX11
+LIBS             += -lTuvok -lTuvokExpressions -lz
+unix:LIBS        += -lGL -lX11 -lGLEW
 unix:!macx:LIBS  += -lGLU
 # Try to link to GLU statically.
 gludirs = /usr/lib /usr/lib/x86_64-linux-gnu

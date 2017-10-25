@@ -185,7 +185,7 @@ public:
   double PerfQuery(enum PerfCounter);
   void IncrementPerfCounter(enum PerfCounter, double amount);
 
-private:
+public:
   /// Initializer; add all our builtin commands.
   void RegisterLuaCommands();
 
@@ -223,7 +223,7 @@ private:
 
   std::shared_ptr<LuaScripting>       m_pLuaScript;
   std::unique_ptr<LuaMemberReg>       m_pMemReg;
-  std::unique_ptr<LuaIOManagerProxy>  m_pIOProxy; 
+  std::unique_ptr<LuaIOManagerProxy>  m_pIOProxy;
 
   AbstrRendererList m_vVolumeRenderer;
   // The active renderer should point into a member of the renderer list.

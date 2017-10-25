@@ -169,7 +169,7 @@ class AbstrRenderer {
      * @param smeth              method to scale values into TF range */
     AbstrRenderer(MasterController* pMasterController,
                   bool bUseOnlyPowerOfTwo,
-                  bool bDownSampleTo8Bits, 
+                  bool bDownSampleTo8Bits,
                   bool bDisableBorder,
                   enum ScalingMethod smeth = SMETH_BIT_WIDTH);
     /** Deallocates dataset and transfer functions. */
@@ -286,7 +286,7 @@ class AbstrRenderer {
     /// (functions that don't make sense as an inherited abstract method).
     virtual void RegisterDerivedClassLuaFunctions(
         LuaClassRegistration<AbstrRenderer>&,
-        LuaScripting*) 
+        LuaScripting*)
     {}
 
     /// "PH" == "paper hacks".  sorry.  delete these after pacvis.
@@ -315,14 +315,14 @@ class AbstrRenderer {
     // Dependency: RenderRegion.cpp
     const ExtendedPlane& GetClipPlane() const;
 
-  protected:
-    // Functions in this section were made protected due to the transition to 
+  public:
+    // Functions in this section were made protected due to the transition to
     // Lua. All functions in this section are exposed through the Lua interface.
 
     virtual ERendererType GetRendererType() const {return RT_INVALID;}
     virtual void SetRendermode(ERenderMode eRenderMode);
     virtual void SetBlendPrecision(EBlendPrecision eBlendPrecision);
-    
+
     /** Sets up a gradient background which fades vertically.
      * @param vColors[0] is the color at the bottom;
      * @param vColors[1] is the color at the top. */
@@ -371,8 +371,8 @@ class AbstrRenderer {
 
     // Modification/access of internal Frustum Culling class
     void SetFrustumCullingModelMatrix(const FLOATMATRIX4& modelMatrix);
-    int GetFrustumCullingLODLevel(const FLOATVECTOR3& vfCenter, 
-                                  const FLOATVECTOR3& vfExtent, 
+    int GetFrustumCullingLODLevel(const FLOATVECTOR3& vfCenter,
+                                  const FLOATVECTOR3& vfExtent,
                                   const UINTVECTOR3& viVoxelCount) const;
 
     std::shared_ptr<RenderRegion3D> GetFirst3DRegion();
@@ -490,7 +490,7 @@ class AbstrRenderer {
     virtual uint32_t GetDebugViewCount() const;
     uint32_t GetDebugView() const;
 
-  private:
+  public:
     // Functions in this section were made private due to the transition to Lua.
     // All functions in this section are exposed through the Lua interface.
     // If a derived class needs access to these functions, it is appropriate
@@ -558,7 +558,7 @@ class AbstrRenderer {
 
     void SetTimeSlice(uint32_t iMSecs) {m_iTimeSliceMSecs = iMSecs;}
 
-    void SetPerfMeasures(uint32_t iMinFramerate, 
+    void SetPerfMeasures(uint32_t iMinFramerate,
                          bool bRenderLowResIntermediateResults,
                          float fScreenResDecFactor,
                          float fSampleDecFactor, uint32_t iStartDelay);

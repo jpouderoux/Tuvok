@@ -34,6 +34,7 @@ target_compile_options(TuvokExpressions PRIVATE -fno-strict-aliasing)
 target_include_directories(TuvokExpressions PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Basics>"
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Renderer>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/IO/expressions>")
 install(TARGETS TuvokExpressions EXPORT TuvokTargets LIBRARY DESTINATION lib)
 
@@ -55,14 +56,16 @@ target_include_directories(Tuvok PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/..>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Basics>"
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/Renderer>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/IO/exception>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/IO/3rdParty/lzma>"
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/IO/3rdParty/boost>"
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/IO/3rdParty/lz4>")
 install(TARGETS Tuvok EXPORT TuvokTargets
         LIBRARY DESTINATION lib INCLUDES DESTINATION include include/Tuvok)
 install(FILES StdTuvokDefines.h DESTINATION include/Tuvok)
-install(DIRECTORY Basics Controller DebugOut IO LuaScripting
-        DESTINATION include/Tuvok FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY 3rdParty Basics Controller DebugOut IO LuaScripting Renderer Shaders
+        DESTINATION include/Tuvok FILES_MATCHING PATTERN "*.h??")
 
 # TuvokConfig.cmake and TuvokTargets.cmake magic to allow find_package(Tuvok)
 include(CMakePackageConfigHelpers)
