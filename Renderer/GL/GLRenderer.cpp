@@ -65,12 +65,12 @@
 using namespace std;
 using namespace tuvok;
 
-GLRenderer::GLRenderer(MasterController* pMasterController, 
+GLRenderer::GLRenderer(MasterController* pMasterController,
                        bool bUseOnlyPowerOfTwo,
-                       bool bDownSampleTo8Bits, 
+                       bool bDownSampleTo8Bits,
                        bool bDisableBorder) :
-  AbstrRenderer(pMasterController, 
-                bUseOnlyPowerOfTwo, 
+  AbstrRenderer(pMasterController,
+                bUseOnlyPowerOfTwo,
                 bDownSampleTo8Bits,
                 bDisableBorder),
   m_TargetBinder(pMasterController),
@@ -235,7 +235,7 @@ bool GLRenderer::Initialize(std::shared_ptr<Context> ctx) {
 
     /// LuaBindNew2DTrans needs to be called before using m_pLua2DTrans.
     LuaBindNew2DTrans();
-    m_pMasterController->MemMan()->Changed2DTrans(LuaClassInstance(), 
+    m_pMasterController->MemMan()->Changed2DTrans(LuaClassInstance(),
                                                   m_pLua2DTrans);
   }
 
@@ -416,7 +416,7 @@ bool GLRenderer::LoadShaders(const string& volumeAccessFunction,
 
 void GLRenderer::CleanupShader(GLSLProgram** p) {
   if (*p) {
-    m_pMasterController->MemMan()->FreeGLSLProgram(*p); 
+    m_pMasterController->MemMan()->FreeGLSLProgram(*p);
     *p =NULL;
   }
 }
@@ -482,8 +482,8 @@ void GLRenderer::Resize(const UINTVECTOR2& vWinSize) {
   AbstrRenderer::Resize(vWinSize);
   MESSAGE("Resizing to %u x %u", vWinSize.x, vWinSize.y);
 
-  glViewport(0, 0, m_vWinSize.x, m_vWinSize.y);
-  ClearColorBuffer();
+  //glViewport(0, 0, m_vWinSize.x, m_vWinSize.y);
+  //ClearColorBuffer();
 }
 
 void GLRenderer::ClearColorBuffer() const {
@@ -548,7 +548,7 @@ void GLRenderer::RecomposeView(const RenderRegion& rgn)
 bool GLRenderer::Continue3DDraw() {
   return (m_vCurrentBrickList.size() > m_iBricksRenderedInThisSubFrame) ||
          (m_iCurrentLODOffset > m_iMinLODForCurrentView) ||
-         this->decreaseScreenResNow;  
+         this->decreaseScreenResNow;
 }
 
 bool GLRenderer::Render3DRegion(RenderRegion3D& region3D) {
@@ -571,6 +571,7 @@ bool GLRenderer::Render3DRegion(RenderRegion3D& region3D) {
 bool GLRenderer::Paint() {
   if (!AbstrRenderer::Paint()) return false;
 
+  //cout << "PAINT" << endl;
   m_pContext->GetStateManager()->Apply(m_BaseState);
 
   if (m_bDatasetIsInvalid) return true;
@@ -590,12 +591,11 @@ bool GLRenderer::Paint() {
   if (m_bFirstDrawAfterResize || m_bFirstDrawAfterModeChange ) {
     StartFrame();
   }
-
   if (m_bFirstDrawAfterResize && m_eRendererTarget != RT_HEADLESS) {
     if (m_pFBOResizeQuickBlit) {
       m_pFBO3DImageLast->Write();
       glViewport(0,0,m_vWinSize.x,m_vWinSize.y);
-  
+
       m_pContext->GetStateManager()->SetEnableBlend(false);
 
       m_pFBOResizeQuickBlit->Read(0);
@@ -610,6 +610,7 @@ bool GLRenderer::Paint() {
 
       m_pProgramTrans->Enable();
       FullscreenQuad();
+      m_pProgramTrans->Disable();
 
       m_pFBOResizeQuickBlit->FinishRead();
       m_pFBOResizeQuickBlit->FinishDepthRead();
@@ -688,7 +689,6 @@ void GLRenderer::FullscreenQuadRegions() const {
 void GLRenderer::FullscreenQuadRegion(const RenderRegion* region,
                                       bool decreaseScreenRes) const {
   const float rescale = decreaseScreenRes ? 1.0f / m_fScreenResDecFactor : 1.0f;
-
   FLOATVECTOR2 minCoord(region->minCoord);
   FLOATVECTOR2 maxCoord(region->maxCoord);
 
@@ -724,7 +724,7 @@ void GLRenderer::CopyOverCompletedRegion(const RenderRegion* region) {
   localState.enableScissor = true;
   m_pContext->GetStateManager()->Apply(localState);
 
-  glViewport(0, 0, m_vWinSize.x, m_vWinSize.y);
+  ///glViewport(0, 0, m_vWinSize.x, m_vWinSize.y);
 
   SetRenderTargetAreaScissor(*region);
 
@@ -740,6 +740,7 @@ void GLRenderer::CopyOverCompletedRegion(const RenderRegion* region) {
   // Display this to the old buffer so we can reuse it in future frame.
   m_pProgramTrans->Enable();
   FullscreenQuadRegion(region, this->decreaseScreenResNow);
+  m_pProgramTrans->Disable();
 
   m_TargetBinder.Unbind();
   m_pFBO3DImageNext[0]->FinishRead();
@@ -782,22 +783,22 @@ void GLRenderer::EndFrame(const vector<char>& justCompletedRegions) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         switch (m_eStereoMode) {
-          case SM_RB : m_pProgramComposeAnaglyphs->Enable(); 
+          case SM_RB : m_pProgramComposeAnaglyphs->Enable();
              break;
           case SM_SCANLINE: {
-                        m_pProgramComposeScanlineStereo->Enable(); 
+                        m_pProgramComposeScanlineStereo->Enable();
                         FLOATVECTOR2 vfWinSize = FLOATVECTOR2(m_vWinSize);
                         m_pProgramComposeScanlineStereo->Set("vScreensize",vfWinSize.x, vfWinSize.y);
                         break;
                        }
           case SM_SBS: {
-                    m_pProgramSBSStereo->Enable(); 
+                    m_pProgramSBSStereo->Enable();
                     float fSplitCoord = (m_bOffscreenIsLowRes) ? 0.5f / m_fScreenResDecFactor : 0.5f;
                     m_pProgramSBSStereo->Set("fSplitCoord",fSplitCoord);
                     break;
                        }
           default : // SM_AF
-          m_pProgramAFStereo->Enable(); 
+          m_pProgramAFStereo->Enable();
           m_pProgramAFStereo->Set("iAlternatingFrameID",m_iAlternatingFrameID);
                     break;
         }
@@ -841,7 +842,7 @@ void GLRenderer::EndFrame(const vector<char>& justCompletedRegions) {
   CopyImageToDisplayBuffer();
 
   // we've definitely recomposed by now.
-  m_bPerformReCompose = false; 
+  m_bPerformReCompose = false;
 }
 
 void GLRenderer::SetRenderTargetArea(const RenderRegion& renderRegion,
@@ -923,7 +924,7 @@ void GLRenderer::RenderSlice(const RenderRegion2D& region, double fSliceIndex,
                              FLOATVECTOR3 vMinCoords, FLOATVECTOR3 vMaxCoords,
                              DOUBLEVECTOR3 vAspectRatio,
                              DOUBLEVECTOR2 vWinAspectRatio) {
-  
+
   switch (region.windowMode) {
     case RenderRegion::WM_AXIAL :
       {
@@ -1055,7 +1056,6 @@ bool GLRenderer::UnbindVolumeTex() {
 }
 
 bool GLRenderer::Render2DView(RenderRegion2D& renderRegion) {
-  
   // bind offscreen buffer
   if (renderRegion.GetUseMIP()) {
     // for MIP rendering "abuse" left-eye buffer for the itermediate results
@@ -1188,9 +1188,9 @@ bool GLRenderer::Render2DView(RenderRegion2D& renderRegion) {
                           max(1.0f, 1.414213f * float(vWinAspectRatio.x/vWinAspectRatio.y)) :
                           1.414213f;
 
-      maOrtho.Ortho(-0.5f*fRoot2Scale/float(vWinAspectRatio.x), 
+      maOrtho.Ortho(-0.5f*fRoot2Scale/float(vWinAspectRatio.x),
                     +0.5f*fRoot2Scale/float(vWinAspectRatio.x),
-                    -0.5f*fRoot2Scale/float(vWinAspectRatio.y), 
+                    -0.5f*fRoot2Scale/float(vWinAspectRatio.y),
                     +0.5f*fRoot2Scale/float(vWinAspectRatio.y),
                     -100.0f, 100.0f);
       maOrtho.setProjection();
@@ -1206,7 +1206,7 @@ bool GLRenderer::Render2DView(RenderRegion2D& renderRegion) {
       MESSAGE("Brick %u of %u in full resolution MIP mode", static_cast<unsigned>(iBrickIndex+1),
               static_cast<unsigned>(m_vCurrentBrickList.size()));
 
-      // for MIP we do not consider empty bricks since we do not render 
+      // for MIP we do not consider empty bricks since we do not render
       // other geometry such as meshes anyway
       if (m_vCurrentBrickList[iBrickIndex].bIsEmpty) continue;
 
@@ -1245,6 +1245,8 @@ bool GLRenderer::Render2DView(RenderRegion2D& renderRegion) {
     m_p1DTransTex->Bind(1);
     m_pProgramTransMIP->Enable();
     FullscreenQuad();
+    m_pProgramTransMIP->Disable();
+
     m_pFBO3DImageNext[1]->FinishRead(0);
   }
 
@@ -1454,10 +1456,10 @@ void GLRenderer::PreSubframe(const RenderRegion& renderRegion)
 
   size_t iStereoBufferCount = (m_bDoStereoRendering) ? 2 : 1;
   for (size_t i = 0;i<iStereoBufferCount;i++) {
-    // write the bounding boxes into the depth buffer 
+    // write the bounding boxes into the depth buffer
     // and the colorbuffer for isosurfacing.
     m_TargetBinder.Bind(m_pFBO3DImageNext[i]);
-    
+
     // Render the coordinate cross (three arrows in upper right corner)
     // Should probably be in GeometryPreRender...
     if (m_bRenderCoordArrows) {
@@ -1537,9 +1539,8 @@ bool GLRenderer::Execute3DFrame(RenderRegion3D& renderRegion,
 }
 
 void GLRenderer::CopyImageToDisplayBuffer() {
-  GL(glViewport(0,0,m_vWinSize.x,m_vWinSize.y));
-  if (m_bClearFramebuffer) ClearColorBuffer();
-
+  //GL(glViewport(0,0,m_vWinSize.x,m_vWinSize.y));
+  //if (m_bClearFramebuffer) ClearColorBuffer();
   GPUState localState = m_BaseState;
   localState.blendFuncSrc = BF_SRC_ALPHA;
   localState.blendFuncDst = BF_ONE_MINUS_SRC_ALPHA;
@@ -1565,7 +1566,7 @@ void GLRenderer::CopyImageToDisplayBuffer() {
   m_pFBO3DImageLast->ReadDepth(1);
 
   // always clear the depth buffer since we are transporting new data from the FBO
-  GL(glClear(GL_DEPTH_BUFFER_BIT));
+  //GL(glClear(GL_DEPTH_BUFFER_BIT));
 
   m_pProgramTrans->Enable();
 
@@ -1573,6 +1574,8 @@ void GLRenderer::CopyImageToDisplayBuffer() {
     FullscreenQuadRegion(renderRegions[0].get(), decreaseRes);
   else
     FullscreenQuad();
+
+  m_pProgramTrans->Disable();
 
   m_pFBO3DImageLast->FinishRead();
   m_pFBO3DImageLast->FinishDepthRead();
@@ -1584,7 +1587,7 @@ void GLRenderer::DrawLogo() const {
   FixedFunctionality();
 
   GPUState localState = m_BaseState;
-  localState.depthMask = false; 
+  localState.depthMask = false;
   localState.blendFuncSrc = BF_SRC_ALPHA;
   localState.blendFuncDst = BF_ONE_MINUS_SRC_ALPHA;
   localState.enableDepthTest = false;
@@ -1641,7 +1644,7 @@ void GLRenderer::DrawBackGradient() const {
   FixedFunctionality();
 
   GPUState localState = m_BaseState;
-  localState.depthMask = false; 
+  localState.depthMask = false;
   localState.enableBlend = false;
   localState.enableDepthTest = false;
   localState.enableTex[0] = TEX_NONE;
@@ -1677,7 +1680,7 @@ void GLRenderer::DrawBackGradient() const {
 
 bool GLRenderer::CaptureSingleFrame(const std::string& strFilename,
                                     bool bPreserveTransparency) const {
-  return m_FrameCapture.CaptureSingleFrame(strFilename, 
+  return m_FrameCapture.CaptureSingleFrame(strFilename,
                                            GetLastFBO(),
                                            bPreserveTransparency);
 }
@@ -1738,7 +1741,7 @@ void GLRenderer::CreateOffscreenBuffers() {
   }
 
   for (uint32_t i=0; i < 2; i++) {
-    if (m_pFBO3DImageNext[i]) {    
+    if (m_pFBO3DImageNext[i]) {
       mm.FreeFBO(m_pFBO3DImageNext[i]);
       m_pFBO3DImageNext[i] = NULL;
     }
@@ -1787,7 +1790,7 @@ void GLRenderer::CreateOffscreenBuffers() {
 
       m_pFBOIsoHit[i]   = mm.GetFBO(GL_NEAREST, GL_NEAREST, GL_CLAMP,
                                     m_vWinSize.x, m_vWinSize.y, m_texFormat32,
-                                    GL_RGBA, GL_FLOAT, 
+                                    GL_RGBA, GL_FLOAT,
                                     m_pContext->GetShareGroupID(), true, 2);
 
       m_pFBOCVHit[i]    = mm.GetFBO(GL_NEAREST, GL_NEAREST, GL_CLAMP,
@@ -1851,7 +1854,7 @@ void GLRenderer::SetDataDepShaderVars() {
       bSliceViewActive = true;
       if (renderRegions[i]->GetUseMIP()) {
         bMipViewActive = true;
-      } 
+      }
     } else {
       b3DViewActive = true;
     }
@@ -1902,7 +1905,7 @@ void GLRenderer::SetDataDepShaderVars() {
       break;
     }
     case RM_ISOSURFACE: {
-      // as we are rendering the 2 slices with the 1d transferfunction in iso 
+      // as we are rendering the 2 slices with the 1d transferfunction in iso
       // mode, we need update that shader, too
       if (bSliceViewActive) {
         m_pProgram1DTransSlice->Enable();
@@ -1967,7 +1970,7 @@ std::string GLRenderer::FindFileInDirs(const std::string& file, const std::vecto
 std::string GLRenderer::FindFile(const std::string& file, bool subdirs) const
 {
   if(!SysTools::FileExists(file)) {
-    
+
     // if it doesn't exist but we allow subdir search, try harder
     if(subdirs) {
       std::vector<std::string> dirs = SysTools::GetSubDirList(
@@ -2033,7 +2036,7 @@ bool GLRenderer::LoadAndVerifyShader(GLSLProgram** program,
       std::string shader = FindFileInDirs(std::string(filename), strDirs, false);
       if(shader == "") {
         WARNING("Could not find FS shader '%s'!", filename);
-      } 
+      }
       frag.push_back(shader);
     }
   }
@@ -2060,7 +2063,7 @@ bool GLRenderer::LoadAndVerifyShader(std::vector<std::string> vert,
       WARNING("We'll need to search for vertex shader '%s'...", v->c_str());
     }
   }
-      
+
   for(std::vector<std::string>::iterator f = frag.begin(); f != frag.end();
       ++f) {
     *f = FindFile(*f, false);
@@ -2093,7 +2096,7 @@ void GLRenderer::CheckMeshStatus() {
          mesh != m_Meshes.end(); mesh++) {
       if ((*mesh)->GetActive()) {
         m_iNumMeshes++;
-        if (!(*mesh)->IsCompletelyOpaque()) 
+        if (!(*mesh)->IsCompletelyOpaque())
           m_iNumTransMeshes++;
       }
     }
@@ -2125,7 +2128,7 @@ void GLRenderer::GeometryPreRender() {
     }
 
     // now write the depth mask of the opaque geomentry into the buffer
-    // as we do front to back compositing we can not write the colors 
+    // as we do front to back compositing we can not write the colors
     // into the buffer yet
     // start with the bboxes
     m_pContext->GetStateManager()->SetDepthMask(true);
@@ -2137,7 +2140,7 @@ void GLRenderer::GeometryPreRender() {
       for (size_t iCurrentBrick = 0;
            iCurrentBrick < m_vCurrentBrickList.size();
            iCurrentBrick++) {
-        if (m_vCurrentBrickList[iCurrentBrick].bIsEmpty) 
+        if (m_vCurrentBrickList[iCurrentBrick].bIsEmpty)
           RenderBBox(FLOATVECTOR4(1,1,0,1),
                      m_vCurrentBrickList[iCurrentBrick].vCenter,
                      m_vCurrentBrickList[iCurrentBrick].vExtension*0.99f);
@@ -2151,11 +2154,11 @@ void GLRenderer::GeometryPreRender() {
     // now the opaque parts of the mesh
     if (m_bSupportsMeshes && m_iNumMeshes) {
       // FTB and BTF would both be ok here, so we use BTF as it is simpler
-      m_pProgramMeshBTF->Enable(); 
+      m_pProgramMeshBTF->Enable();
       RenderOpaqueGeometry();
     }
   } else {
-    // if we are in isosurface mode none of the complicated stuff from 
+    // if we are in isosurface mode none of the complicated stuff from
     // above applies, as the volume is opqaue we can just use regular
     // depth testing and the order of the opaque elements does not matter
     // so we might as well now write all the opaque geoemtry into the color
@@ -2171,7 +2174,7 @@ void GLRenderer::GeometryPreRender() {
       for (size_t iCurrentBrick = 0;
            iCurrentBrick < m_vCurrentBrickList.size();
            iCurrentBrick++) {
-        if (m_vCurrentBrickList[iCurrentBrick].bIsEmpty) 
+        if (m_vCurrentBrickList[iCurrentBrick].bIsEmpty)
           RenderBBox(FLOATVECTOR4(1,1,0,1),
                      m_vCurrentBrickList[iCurrentBrick].vCenter,
                      m_vCurrentBrickList[iCurrentBrick].vExtension*0.99f);
@@ -2205,7 +2208,7 @@ void GLRenderer::GeometryPostRender() {
     if (m_bRenderGlobalBBox) RenderBBox();
     if (m_bRenderLocalBBox) {
       for (size_t iCurrentBrick = 0;iCurrentBrick<m_vCurrentBrickList.size();iCurrentBrick++) {
-        if (m_vCurrentBrickList[iCurrentBrick].bIsEmpty) 
+        if (m_vCurrentBrickList[iCurrentBrick].bIsEmpty)
           RenderBBox(FLOATVECTOR4(1,1,0,1),
                      m_vCurrentBrickList[iCurrentBrick].vCenter,
                      m_vCurrentBrickList[iCurrentBrick].vExtension*0.99f);
@@ -2238,13 +2241,13 @@ void GLRenderer::GeometryPostRender() {
       m_pContext->GetStateManager()->Apply(localState);
 
       // "over"-compositing with proper alpha
-      // we only use this once in the project so we bypass 
+      // we only use this once in the project so we bypass
       // the state manager, be carfeull to reset it below
       GL(glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
                              GL_ONE, GL_ONE_MINUS_SRC_ALPHA));
 
       m_pProgramMeshBTF->Enable();
-    
+
       SetMeshBTFSorting(true);
       RenderTransBackGeometry();
       RenderTransInGeometry();
@@ -2283,7 +2286,7 @@ struct MeshFormat {
 
 static const GLsizei iStructSize = GLsizei(sizeof(MeshFormat));
 
-void ListEntryToMeshFormat(std::vector<MeshFormat>& list, 
+void ListEntryToMeshFormat(std::vector<MeshFormat>& list,
                            const RenderMesh* mesh,
                            size_t startIndex) {
 
@@ -2302,17 +2305,17 @@ void ListEntryToMeshFormat(std::vector<MeshFormat>& list,
     else
       f.m_vColor = mesh->GetColors()[vertexIndex];
 
-    if (bHasNormal) 
+    if (bHasNormal)
       f.m_vNormal = mesh->GetNormals()[vertexIndex];
     else
       f.m_vNormal = FLOATVECTOR3(2,2,2);
 
-    if (bHasNormal) 
+    if (bHasNormal)
       f.m_vNormal = mesh->GetNormals()[vertexIndex];
     else
       f.m_vNormal = FLOATVECTOR3(2,2,2);
 
-    if (bHasTC) 
+    if (bHasTC)
       f.m_vTexCoords = mesh->GetTexCoords()[vertexIndex];
     else
       f.m_vTexCoords = FLOATVECTOR2(0,0);
@@ -2326,14 +2329,14 @@ void GLRenderer::RenderMergedMesh(SortIndexPVec& mergedMesh) {
   if (mergedMesh.empty()) return;
 
   // sort the mesh
-  std::sort(mergedMesh.begin(), mergedMesh.end(), 
+  std::sort(mergedMesh.begin(), mergedMesh.end(),
            (m_bSortMeshBTF) ?  DistanceSortOver : DistanceSortUnder);
 
   // turn it into something renderable
   std::vector<MeshFormat> list;
   for (SortIndexPVec::const_iterator index = mergedMesh.begin();
        index != mergedMesh.end();
-       index++) {   
+       index++) {
     ListEntryToMeshFormat(list, (*index)->m_mesh, (*index)->m_index);
   }
 
@@ -2347,7 +2350,7 @@ void GLRenderer::RenderMergedMesh(SortIndexPVec& mergedMesh) {
   GL(glNormalPointer(GL_FLOAT, iStructSize, BUFFER_OFFSET(7*sizeof(float))));
   GL(glTexCoordPointer(2, GL_FLOAT, iStructSize,
                        BUFFER_OFFSET(10*sizeof(float))));
-  GL(glEnableClientState(GL_VERTEX_ARRAY)); 
+  GL(glEnableClientState(GL_VERTEX_ARRAY));
   GL(glEnableClientState(GL_COLOR_ARRAY));
   GL(glEnableClientState(GL_NORMAL_ARRAY));
   GL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
@@ -2355,7 +2358,7 @@ void GLRenderer::RenderMergedMesh(SortIndexPVec& mergedMesh) {
   GL(glDisableClientState(GL_VERTEX_ARRAY));
   GL(glDisableClientState(GL_COLOR_ARRAY));
   GL(glDisableClientState(GL_NORMAL_ARRAY));
-  GL(glDisableClientState(GL_TEXTURE_COORD_ARRAY)); 
+  GL(glDisableClientState(GL_TEXTURE_COORD_ARRAY));
 }
 
 void GLRenderer::RenderTransBackGeometry() {
@@ -2370,7 +2373,7 @@ void GLRenderer::RenderTransBackGeometry() {
     }
     return;
   }
-  
+
   // more than one transparent mesh -> merge them before sorting and rendering
   SortIndexPVec mergedMesh;
   for (vector<shared_ptr<RenderMesh>>::iterator mesh = m_Meshes.begin();
@@ -2382,7 +2385,7 @@ void GLRenderer::RenderTransBackGeometry() {
       // currently only triangles are supported
       if (m[0]->m_mesh->GetVerticesPerPoly() != 3) continue;
       // merge lists
-      mergedMesh.insert(mergedMesh.end(), m.begin(), m.end());   
+      mergedMesh.insert(mergedMesh.end(), m.begin(), m.end());
     }
   }
   RenderMergedMesh(mergedMesh);
@@ -2400,7 +2403,7 @@ void GLRenderer::RenderTransInGeometry() {
     }
     return;
   }
-  
+
   // more than one transparent mesh -> merge them before sorting and rendering
   SortIndexPVec mergedMesh;
   for (vector<shared_ptr<RenderMesh>>::iterator mesh = m_Meshes.begin();
@@ -2412,7 +2415,7 @@ void GLRenderer::RenderTransInGeometry() {
       // currently only triangles are supported
       if (m[0]->m_mesh->GetVerticesPerPoly() != 3) continue;
       // merge lists
-      mergedMesh.insert(mergedMesh.end(), m.begin(), m.end());   
+      mergedMesh.insert(mergedMesh.end(), m.begin(), m.end());
     }
   }
   RenderMergedMesh(mergedMesh);
@@ -2430,7 +2433,7 @@ void GLRenderer::RenderTransFrontGeometry() {
     }
     return;
   }
-  
+
   // more than one transparent mesh -> merge them before sorting and rendering
   SortIndexPVec mergedMesh;
   for (vector<shared_ptr<RenderMesh>>::iterator mesh = m_Meshes.begin();
@@ -2442,7 +2445,7 @@ void GLRenderer::RenderTransFrontGeometry() {
       // currently only triangles are supported
       if (m[0]->m_mesh->GetVerticesPerPoly() != 3) continue;
       // merge lists
-      mergedMesh.insert(mergedMesh.end(), m.begin(), m.end());   
+      mergedMesh.insert(mergedMesh.end(), m.begin(), m.end());
     }
   }
   RenderMergedMesh(mergedMesh);
@@ -2457,7 +2460,7 @@ void GLRenderer::PlaneIn3DPreRender() {
   // pass once to init the depth buffer.  for isosurface rendering we can go
   // ahead and render the planes directly as isosurfacing writes out correct
   // depth values
-  if (m_eRenderMode != RM_ISOSURFACE || m_bDoClearView) {  
+  if (m_eRenderMode != RM_ISOSURFACE || m_bDoClearView) {
     RenderPlanesIn3D(true);
   } else {
     RenderPlanesIn3D(false);
@@ -2475,7 +2478,7 @@ void GLRenderer::PlaneIn3DPostRender() {
     GPUState localState = m_BaseState;
     localState.enableDepthTest = false;
     m_pContext->GetStateManager()->Apply(localState);
-    
+
     RenderPlanesIn3D(false);
   }
 }
@@ -2493,7 +2496,7 @@ void GLRenderer::RenderPlanesIn3D(bool bDepthPassOnly) {
   localState.enableTex[1] = TEX_NONE;
   localState.colorMask = !bDepthPassOnly;
   m_pContext->GetStateManager()->Apply(localState);
-  
+
   if (!bDepthPassOnly) glColor4f(1,1,1,1);
   for (size_t i=0; i < renderRegions.size(); ++i) {
 
@@ -2550,7 +2553,7 @@ void GLRenderer::RenderClipPlane(EStereoID eStereoID)
   m_mView[size_t(eStereoID)].setModelview();
 
   FixedFunctionality();
-  GPUState localState = m_BaseState;	
+  GPUState localState = m_BaseState;
   localState.enableTex[0] = TEX_NONE;
   localState.enableTex[1] = TEX_NONE;
 
@@ -2558,7 +2561,7 @@ void GLRenderer::RenderClipPlane(EStereoID eStereoID)
   TriList quad;
   /* transformed.Quad will give us back a list of triangle vertices; the return
     * value gives us the order we should render those so that we don't mess up
-    * front/back faces. */ 
+    * front/back faces. */
   bool ccw = transformed.Quad(m_vEye, quad);
 
   if (m_iNumMeshes == 0) {
@@ -2614,7 +2617,7 @@ void GLRenderer::FixedFunctionality() const {
 }
 
 void GLRenderer::SyncStateManager() {
-  m_pContext->GetStateManager()->Apply(m_BaseState, true);  
+  m_pContext->GetStateManager()->Apply(m_BaseState, true);
 }
 
 bool GLRenderer::RegisterDataset(Dataset* ds) {
@@ -2735,11 +2738,11 @@ bool GLRenderer::Render3DView(const RenderRegion3D& renderRegion,
 
   if (m_eRenderMode == RM_ISOSURFACE &&
       m_vCurrentBrickList.size() == m_iBricksRenderedInThisSubFrame) {
-     
+
       for (size_t i = 0;i<iStereoBufferCount;i++) {
         m_TargetBinder.Bind(m_pFBO3DImageNext[i]);
         ComposeSurfaceImage(renderRegion, EStereoID(i));
-      } 
+      }
 
       m_TargetBinder.Unbind();
   }
@@ -2823,7 +2826,7 @@ void GLRenderer::ComposeSurfaceImage(const RenderRegion &renderRegion, EStereoID
   if (m_bDoClearView) {
     m_pFBOCVHit[size_t(eStereoID)]->FinishRead(0);
     m_pFBOCVHit[size_t(eStereoID)]->FinishRead(1);
-  } 
+  }
 
   m_pFBOIsoHit[size_t(eStereoID)]->FinishRead(1);
   m_pFBOIsoHit[size_t(eStereoID)]->FinishRead(0);
@@ -2833,7 +2836,7 @@ void GLRenderer::ComposeSurfaceImage(const RenderRegion &renderRegion, EStereoID
 void GLRenderer::CVFocusHasChanged(LuaClassInstance luaRegion) {
   // read back the 3D position from the framebuffer
   float vec[4];
-  m_pFBOIsoHit[0]->ReadBackPixels(m_vCVMousePos.x, 
+  m_pFBOIsoHit[0]->ReadBackPixels(m_vCVMousePos.x,
                                   m_vWinSize.y-m_vCVMousePos.y,
                                   1, 1, vec);
 
@@ -2945,7 +2948,7 @@ GLint GLRenderer::ComputeGLFilter() const {
   switch (m_eInterpolant) {
     case Linear :          iFilter = GL_LINEAR; break;
     case NearestNeighbor : iFilter = GL_NEAREST; break;
-  }    
+  }
   return iFilter;
 }
 
@@ -2957,8 +2960,8 @@ bool GLRenderer::CropDataset(const std::string& strTempDir, bool bKeepOldData) {
   // get rid of the viewing transformation in the plane
   p.Transform(trans.inverse(),false);
 
-  if (!m_pDataset->Crop(p.Plane(),strTempDir,bKeepOldData, 
-      m_pMasterController->IOMan()->GetUseMedianFilter(), 
+  if (!m_pDataset->Crop(p.Plane(),strTempDir,bKeepOldData,
+      m_pMasterController->IOMan()->GetUseMedianFilter(),
       m_pMasterController->IOMan()->GetClampToEdge())) return false;
 
   FileBackedDataset* fbd = dynamic_cast<FileBackedDataset*>(m_pDataset);
@@ -2966,7 +2969,7 @@ bool GLRenderer::CropDataset(const std::string& strTempDir, bool bKeepOldData) {
   {
     LoadFile(fbd->Filename());
   }
-  
+
   return true;
 }
 
@@ -2981,7 +2984,7 @@ void GLRenderer::MaxMinBoxToVector(const FLOATVECTOR3& vMinPoint,
   posData.push_back(FLOATVECTOR3(vMinPoint.x, vMaxPoint.y, vMinPoint.z));
   posData.push_back(FLOATVECTOR3(vMaxPoint.x, vMaxPoint.y, vMinPoint.z));
   posData.push_back(FLOATVECTOR3(vMaxPoint.x, vMinPoint.y, vMinPoint.z));
-  
+
   // FRONT
   posData.push_back(FLOATVECTOR3(vMaxPoint.x, vMaxPoint.y, vMaxPoint.z));
   posData.push_back(FLOATVECTOR3(vMinPoint.x, vMaxPoint.y, vMaxPoint.z));

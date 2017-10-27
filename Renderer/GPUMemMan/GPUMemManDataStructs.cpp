@@ -200,7 +200,7 @@ size_t GLVolumeListElem::GetCPUSize() const
   }
   return sz;
 #else
-  return static_cast<size_t>(nonstd::accumulate( 
+  return static_cast<size_t>(nonstd::accumulate(
     this->volumes.begin(), this->volumes.end(), 0,
     std::mem_fn(&GLVolume::GetCPUSize))
   );
@@ -416,7 +416,7 @@ bool GLVolumeListElem::CreateTexture(std::vector<unsigned char>& vUploadHub,
   }
 
   switch (iCompCount) {
-    case 1 : glFormat = GL_LUMINANCE; break;
+    case 1 : glFormat = GL_RED; break; //GL_LUMINANCE; break;
     case 3 : glFormat = GL_RGB; break;
     case 4 : glFormat = GL_RGBA; break;
     default : FreeData(); return false;
@@ -425,7 +425,7 @@ bool GLVolumeListElem::CreateTexture(std::vector<unsigned char>& vUploadHub,
   if (iBitWidth == 8) {
       glType = GL_UNSIGNED_BYTE;
       switch (iCompCount) {
-        case 1 : glInternalformat = GL_LUMINANCE8; break;
+        case 1 : glInternalformat = GL_R16; break;
         case 3 : glInternalformat = GL_RGB8; break;
         case 4 : glInternalformat = GL_RGBA8; break;
         default : FreeData(); return false;
@@ -444,7 +444,7 @@ bool GLVolumeListElem::CreateTexture(std::vector<unsigned char>& vUploadHub,
       }
 
       switch (iCompCount) {
-        case 1 : glInternalformat = GL_LUMINANCE16; break;
+        case 1 : glInternalformat = GL_R16; break;
         case 3 : glInternalformat = GL_RGB16; break;
         case 4 : glInternalformat = GL_RGBA16; break;
         default : FreeData(); return false;
@@ -453,7 +453,7 @@ bool GLVolumeListElem::CreateTexture(std::vector<unsigned char>& vUploadHub,
       if(iBitWidth == 32) {
         glType = GL_FLOAT;
         glInternalformat = GL_LUMINANCE32F_ARB;
-        glFormat = GL_LUMINANCE;
+        glFormat = GL_RED; //GL_LUMINANCE;
       } else {
         T_ERROR("Cannot handle data of width %d", iBitWidth);
         FreeData();

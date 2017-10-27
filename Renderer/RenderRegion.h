@@ -67,7 +67,7 @@ template <typename T> class LuaClassRegistration;
     // has this never been drawn (are we starting from scratch for this view)?
     bool isBlank;
 
-    // no LOD has been completed (this is different from "isBlank" above as 
+    // no LOD has been completed (this is different from "isBlank" above as
     // it considers what is visible to the user not what is in the backbuffer)
     bool isTargetBlank;
 
@@ -99,7 +99,7 @@ template <typename T> class LuaClassRegistration;
     FLOATMATRIX4 rotation;
     FLOATMATRIX4 translation;
 
-  protected:
+  //protected:
 
     // These methods should be accessed through AbstrRenderer
     friend class AbstrRenderer;
@@ -151,7 +151,7 @@ template <typename T> class LuaClassRegistration;
 
     virtual bool is2D() const { return true; }
 
-  protected:
+  //protected:
     // These methods should be accessed through AbstrRenderer
     friend class AbstrRenderer;
     friend class GLRenderer;
@@ -181,7 +181,7 @@ template <typename T> class LuaClassRegistration;
 
     virtual bool is3D() const { return true; }
 
-  protected:
+  //protected:
     // These methods should be accessed through AbstrRenderer
     friend class AbstrRenderer;
     friend class GLRenderer;
