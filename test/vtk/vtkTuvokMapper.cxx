@@ -16,6 +16,7 @@
 
 #include "vtkActor.h"
 #include "vtkBoundingBox.h"
+#include "vtkCamera.h"
 #include "vtkDataSet.h"
 #include "vtkExecutive.h"
 #include "vtkGenericCell.h"
@@ -68,6 +69,7 @@ vtkTuvokMapper::~vtkTuvokMapper()
   {
     this->ARenderer->Cleanup();
     Controller::Instance().ReleaseVolumeRenderer(this->ARenderer);
+    delete this->ARenderer;
   }
 }
 
@@ -98,6 +100,26 @@ void vtkTuvokMapper::Render(vtkRenderer *renderer, vtkVolume *vol)
       this->ARenderer->Initialize(GLContext::Current(0));
       cout << "Done." << endl;
     }
+
+    // Transfer VTK camera information to Tuvok
+    vtkCamera* cam = renderer->GetActiveCamera();
+    double* vPos = cam->GetPosition();
+    double* vFocal = cam->GetFocalPoint();
+    double* vUp = cam->GetViewUp();
+
+    /*FLOATVECTOR3 pos = this->ARenderer->GetViewPos();
+    FLOATVECTOR3 dir = this->ARenderer->GetViewDir();
+    FLOATVECTOR3 up = this->ARenderer->GetUpDir();
+    cout << "CAMERA Pos " << pos << endl;
+    cout << "CAMERA Dir " << dir << endl;
+    cout << "CAMERA Up " << up << endl;
+    cout << "VTK CAMERA Pos " << vPos[0] << "\t" << vPos[1] << "\t" << vPos[2] << endl;
+    cout << "VTK CAMERA Dir " << vFocal[0] << "\t" << vFocal[1] << "\t" << vFocal[2] << endl;
+    cout << "VTK CAMERA Up " << vUp[0] << "\t" << vUp[1] << "\t" << vUp[2] << endl;*/
+
+    this->ARenderer->SetViewPos(FLOATVECTOR3(vPos[0], vPos[1], vPos[2]));
+    this->ARenderer->SetViewDir(FLOATVECTOR3(vFocal[0], vFocal[1], vFocal[2]) - FLOATVECTOR3(vPos[0], vPos[1], vPos[2]));
+    this->ARenderer->SetUpDir(FLOATVECTOR3(vUp[0], vUp[1], vUp[2]));
 
     UINTVECTOR2 tuvokSize = this->ARenderer->GetSize();
     int* vtkSize = renderer->GetSize();

@@ -593,7 +593,7 @@ bool GLRenderer::Paint() {
   }
   if (m_bFirstDrawAfterResize && m_eRendererTarget != RT_HEADLESS) {
     if (m_pFBOResizeQuickBlit) {
-      m_pFBO3DImageLast->Write();
+       m_pFBO3DImageLast->Write();
       glViewport(0,0,m_vWinSize.x,m_vWinSize.y);
 
       m_pContext->GetStateManager()->SetEnableBlend(false);
@@ -778,7 +778,6 @@ void GLRenderer::EndFrame(const vector<char>& justCompletedRegions) {
           m_pFBO3DImageNext[0]->Read(0);
           m_pFBO3DImageNext[1]->Read(1);
         }
-
         m_TargetBinder.Bind(m_pFBO3DImageLast);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -1237,7 +1236,6 @@ bool GLRenderer::Render2DView(RenderRegion2D& renderRegion) {
     m_pContext->GetStateManager()->Apply(localState);
 
     m_TargetBinder.Bind(m_pFBO3DImageNext[0]);
-
     SetRenderTargetArea(UINTVECTOR2(0,0), m_vWinSize, false);
     m_pContext->GetStateManager()->SetEnableScissor(true);
     SetRenderTargetAreaScissor(renderRegion);
@@ -1542,11 +1540,12 @@ void GLRenderer::CopyImageToDisplayBuffer() {
   //GL(glViewport(0,0,m_vWinSize.x,m_vWinSize.y));
   //if (m_bClearFramebuffer) ClearColorBuffer();
   GPUState localState = m_BaseState;
-  localState.blendFuncSrc = BF_SRC_ALPHA;
+  localState.blendFuncSrc = BF_ONE; //SRC_ALPHA;
   localState.blendFuncDst = BF_ONE_MINUS_SRC_ALPHA;
-  localState.depthFunc = DF_LEQUAL;
+  localState.depthFunc = DF_EQUAL;//QUAL;
   localState.enableTex[0] = TEX_2D;
   localState.enableTex[1] = TEX_NONE;
+  localState.enableBlend = true;
   m_pContext->GetStateManager()->Apply(localState);
 
   m_pFBO3DImageLast->Read(0);
@@ -2108,7 +2107,6 @@ void GLRenderer::CheckMeshStatus() {
 
 void GLRenderer::GeometryPreRender() {
   CheckMeshStatus();
-
   // for rendering modes other than isosurface render the bbox in the first
   // pass once, to init the depth buffer.  for isosurface rendering we can go
   // ahead and render the bbox directly as isosurfacing writes out correct

@@ -28,11 +28,8 @@ int main(int argc, const char *argv[])
 
   // Create a plane
   vtkNew<vtkPlaneSource> planeSource;
-  //planeSource->SetCenter(0.0, 0.0, 0.0);
-  //planeSource->SetNormal(0.0, 0.0, 1.0);
-  planeSource->SetOrigin(0.0, 0.0, 0.0);
-  planeSource->SetPoint1(-20, 0, 0.);
-  planeSource->SetPoint2(0, 20, 0.);
+  planeSource->SetCenter(0.0, 0.0, 0.0);
+  planeSource->SetNormal(0.0, 0.0, 1.0);
   planeSource->SetXResolution(40);
   planeSource->SetYResolution(40);
   planeSource->Update();
